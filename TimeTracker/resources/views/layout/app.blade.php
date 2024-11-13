@@ -10,8 +10,10 @@
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body>
-    <i class="bi bi-0-square-fill"></i>
-    <div class="form-control">Привет <span class="badge text-bg-success">Всё успешно подключено</span></div>
-    <i class="fa-solid fa-comment"></i>
+    
+    <div class="container mt-3">
+        @yield('content')
+    </div>
+
 </body>
 </html>
