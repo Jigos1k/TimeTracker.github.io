@@ -53,21 +53,58 @@ class TaskController extends Controller
 
         for ($i = 0; $i < 14; $i++) {
             $currentDate = $today->copy()->addDays($i);
-            $formattedDate = $currentDate->format('d. M.');
-            $dayOfWeek = $currentDate->format('l');
             $dailyData = DB::select(
                 'SELECT id, name, comment, date, time, status_id, settings FROM task WHERE `date` = ?  ORDER BY time',
                 [$currentDate->format('Y-m-d')]
             );
-            $tasks[$formattedDate]['task'] = $dailyData;
-            $tasks[$formattedDate]['date'] = $formattedDate;
-            $tasks[$formattedDate]['dateofweek'] = $dayOfWeek;
+            $tasks[$i]['task'] = $dailyData;
+            $tasks[$i]['date'] = $currentDate->format('Y-m-d');
+            $tasks[$i]['day'] = $currentDate->format('d');
+            $tasks[$i]['month'] = $currentDate->format('F');
+            $tasks[$i]['fulldate'] = $currentDate->format('d. M');
+            $tasks[$i]['fullweek'] = $currentDate->format('l');
+            $tasks[$i]['dateofweek'] = $currentDate->format('D');
 
-            $lastDate = $formattedDate;
+            $lastDate = $currentDate->format('Y-m-d');
         }
 
         Session::put('last_processed_date', $lastDate);
 
         return view('task', ['tasks' => $tasks]);
+    }
+
+    public function getDates(Request $request)
+    {
+        $currentDate = $request->input('current_date');
+        $dates = $this->generateFutureDates($currentDate);
+
+        return response()->json($dates);
+    }
+
+    private function generateFutureDates($currentDate)
+    {
+        $dates = [];
+        $currentDate = \Carbon\Carbon::createFromFormat('Y-m-d', $currentDate);
+        
+        for ($i = 0; $i < 14; $i++) {
+            $nextDate = $currentDate->copy()->addDays($i + 1);
+            
+            $dailyData = DB::select(
+                'SELECT id, name, comment, date, time, status_id, settings FROM task WHERE `date` = ?  ORDER BY time',
+                [$nextDate->format('Y-m-d')]
+            );
+
+            $dates[] = [
+                'day' => $nextDate->format('d'),
+                'dateofweek' => $nextDate->format('D'),
+                'date' => $nextDate->format('Y-m-d'),
+                'month' => $nextDate->format('F'),
+                'fulldate' => $nextDate->format('d. M'),
+                'fullweek' => $nextDate->format('l'),
+                'task' => json_encode($dailyData),
+            ];
+        }
+        
+        return $dates;
     }
 }
